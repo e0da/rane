@@ -1,9 +1,14 @@
 import numpy as np
 import pygame
-import sys
+import argparse
 
+# Define default grid dimensions and pixel sizes
 DEFAULT_WIDTH = 50
 DEFAULT_HEIGHT = 50
+DEFAULT_PIXEL_WIDTH = 10
+DEFAULT_PIXEL_HEIGHT = 10
+DEFAULT_HUE_MID = 180
+DEFAULT_HUE_RANGE = 360
 
 
 def create_grid(width, height):
@@ -11,7 +16,7 @@ def create_grid(width, height):
     return np.linspace(-1, 1, width * height).reshape(height, width)
 
 
-def map_value_to_color(value, hue_mid=180, hue_range=360):
+def map_value_to_color(value, hue_mid=DEFAULT_HUE_MID, hue_range=DEFAULT_HUE_RANGE):
     """
     Map a value from -1 to 1 to a color using HSV color space.
     -1 -> hue_mid - hue_range / 2
@@ -27,7 +32,13 @@ def map_value_to_color(value, hue_mid=180, hue_range=360):
     return color.r, color.g, color.b
 
 
-def render_grid(screen, grid, pixel_size=10, hue_mid=180):
+def render_grid(
+    screen,
+    grid,
+    pixel_width=DEFAULT_PIXEL_WIDTH,
+    pixel_height=DEFAULT_PIXEL_HEIGHT,
+    hue_mid=180,
+):
     """Render the grid using Pygame."""
     height, width = grid.shape
     for y in range(height):
@@ -35,17 +46,20 @@ def render_grid(screen, grid, pixel_size=10, hue_mid=180):
             value = grid[y][x]
             color = map_value_to_color(value, hue_mid)
             pygame.draw.rect(
-                screen, color, (x * pixel_size, y * pixel_size, pixel_size, pixel_size)
+                screen,
+                color,
+                (x * pixel_width, y * pixel_height, pixel_width, pixel_height),
             )
     pygame.display.flip()
 
 
-def _main(width, height):
+def _main(args: argparse.Namespace):
+    width, height = map(int, args.dimensions.split("x"))
+    pixel_width, pixel_height = map(int, args.pixel_dimensions.split("x"))
     grid = create_grid(width, height)
 
     pygame.init()
-    pixel_size = 10
-    screen = pygame.display.set_mode((width * pixel_size, height * pixel_size))
+    screen = pygame.display.set_mode((width * pixel_width, height * pixel_height))
     pygame.display.set_caption("rane")
 
     running = True
@@ -63,30 +77,38 @@ def _main(width, height):
                 drawing = False
             elif event.type == pygame.MOUSEMOTION and drawing:
                 x, y = event.pos
-                x //= pixel_size
-                y //= pixel_size
+                x //= pixel_width
+                y //= pixel_height
                 if 0 <= x < width and 0 <= y < height:
                     grid[y][x] = 0 if lower else 1
 
-        render_grid(screen, grid, pixel_size)
+        render_grid(screen, grid, pixel_width, pixel_height)
 
     pygame.quit()
 
 
-def main():
+def _parse_args():
+    parser = argparse.ArgumentParser(description="Liquid Surface Visualization")
+    parser.add_argument(
+        "-d",
+        "--dimensions",
+        type=str,
+        default=f"{DEFAULT_WIDTH}x{DEFAULT_HEIGHT}",
+        help="Grid dimensions as WIDTHxHEIGHT, e.g. %(default)s",
+    )
+    parser.add_argument(
+        "-p",
+        "--pixel-dimensions",
+        type=str,
+        default=f"{DEFAULT_PIXEL_WIDTH}x{DEFAULT_PIXEL_HEIGHT}",
+        help="Pixel dimensions as WIDTHxHEIGHT, e.g. %(default)s",
+    )
+    return parser.parse_args()
 
-    if len(sys.argv) == 1:
-        width = DEFAULT_WIDTH
-        height = DEFAULT_HEIGHT
-    elif len(sys.argv) == 2:
-        width = height = int(sys.argv[1])
-    elif len(sys.argv) == 3:
-        width = int(sys.argv[1] or DEFAULT_WIDTH)
-        height = int(sys.argv[2] or DEFAULT_HEIGHT)
-    else:
-        print("Usage: rane [width] [height]")
-        sys.exit(1)
-    _main(width, height)
+
+def main():
+    args = _parse_args()
+    _main(args)
 
 
 if __name__ == "__main__":
