@@ -4,7 +4,7 @@ import matplotlib.animation as animation
 
 # Define the simulation parameters
 GRID_SIZE = 100
-TIME_STEPS = 100
+TIME_STEPS = 200
 DAMPING = 0.99
 
 # Initialize the height and velocity matrices
@@ -40,7 +40,7 @@ def update():
 
 # Initialize the plot
 fig, ax = plt.subplots()
-im = ax.imshow(height, cmap="viridis", vmin=-1, vmax=1)
+im = ax.imshow(height, cmap="seismic", vmin=-10, vmax=10)
 
 
 def animate(i):
