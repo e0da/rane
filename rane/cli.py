@@ -1,10 +1,14 @@
 import numpy as np
 import pygame
+import sys
+
+DEFAULT_WIDTH = 50
+DEFAULT_HEIGHT = 50
 
 
-def create_grid(size):
+def create_grid(width, height):
     """Create a grid with values ranging from -1 to 1."""
-    return np.linspace(-1, 1, size**2).reshape(size, size)
+    return np.linspace(-1, 1, width * height).reshape(height, width)
 
 
 def map_value_to_color(value, hue_mid=180, hue_range=360):
@@ -25,9 +29,9 @@ def map_value_to_color(value, hue_mid=180, hue_range=360):
 
 def render_grid(screen, grid, pixel_size=10, hue_mid=180):
     """Render the grid using Pygame."""
-    size = len(grid)
-    for y in range(size):
-        for x in range(size):
+    height, width = grid.shape
+    for y in range(height):
+        for x in range(width):
             value = grid[y][x]
             color = map_value_to_color(value, hue_mid)
             pygame.draw.rect(
@@ -36,15 +40,13 @@ def render_grid(screen, grid, pixel_size=10, hue_mid=180):
     pygame.display.flip()
 
 
-def main():
-    size = 100  # Example size, you can adjust as needed
-    grid = create_grid(size)
-    grid = grid.T  # Transpose to fix the orientation issue
+def _main(width, height):
+    grid = create_grid(width, height)
 
     pygame.init()
     pixel_size = 10
-    screen = pygame.display.set_mode((size * pixel_size, size * pixel_size))
-    pygame.display.set_caption("Liquid Surface Visualization")
+    screen = pygame.display.set_mode((width * pixel_size, height * pixel_size))
+    pygame.display.set_caption("rane")
 
     running = True
     drawing = False
@@ -63,12 +65,28 @@ def main():
                 x, y = event.pos
                 x //= pixel_size
                 y //= pixel_size
-                if 0 <= x < size and 0 <= y < size:
+                if 0 <= x < width and 0 <= y < height:
                     grid[y][x] = 0 if lower else 1
 
         render_grid(screen, grid, pixel_size)
 
     pygame.quit()
+
+
+def main():
+
+    if len(sys.argv) == 1:
+        width = DEFAULT_WIDTH
+        height = DEFAULT_HEIGHT
+    elif len(sys.argv) == 2:
+        width = height = int(sys.argv[1])
+    elif len(sys.argv) == 3:
+        width = int(sys.argv[1] or DEFAULT_WIDTH)
+        height = int(sys.argv[2] or DEFAULT_HEIGHT)
+    else:
+        print("Usage: rane [width] [height]")
+        sys.exit(1)
+    _main(width, height)
 
 
 if __name__ == "__main__":
