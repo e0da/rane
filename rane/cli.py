@@ -9,21 +9,15 @@ def create_grid(size):
 
 def map_value_to_color(value):
     """
-    Map a value from -1 to 1 to a color from violet to red.
-    -1 -> violet (RGB: 148, 0, 211)
-     0 -> blue (RGB: 0, 0, 255)
-     1 -> red (RGB: 255, 0, 0)
+    Map a value from -1 to 1 to a color using HSV color space.
+    -1 -> red (Hue 0)
+     0 -> green (Hue 120)
+     1 -> violet (Hue 240)
     """
-    violet = np.array([148, 0, 211])
-    blue = np.array([0, 0, 255])
-    red = np.array([255, 0, 0])
-
-    if value < 0:
-        # Interpolate between violet and blue
-        return tuple((violet + (blue - violet) * (value + 1)).astype(int))
-    else:
-        # Interpolate between blue and red
-        return tuple((blue + (red - blue) * value).astype(int))
+    hue = (value + 1) * 0.5 * 240  # Scale value to range from 0 to 240 (red to violet)
+    color = pygame.Color(0)
+    color.hsva = (hue, 100, 100)  # Full saturation and value (brightness)
+    return color.r, color.g, color.b
 
 
 def render_grid(grid, pixel_size=10):
