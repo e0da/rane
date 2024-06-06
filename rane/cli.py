@@ -1,61 +1,63 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-
-# Define the simulation parameters
-GRID_SIZE = 100
-TIME_STEPS = 200
-DAMPING = 0.99
-
-# Initialize the height and velocity matrices
-height = np.zeros((GRID_SIZE, GRID_SIZE))
-velocity = np.zeros((GRID_SIZE, GRID_SIZE))
+import pygame
 
 
-# Drop a water droplet at a given position
-def drop_droplet(x, y, magnitude):
-    height[x, y] += magnitude
+def create_grid(size):
+    """Create a grid with values ranging from -1 to 1."""
+    return np.linspace(-1, 1, size**2).reshape(size, size)
 
 
-# Update the simulation
-def update():
-    global height, velocity
+def map_value_to_color(value):
+    """
+    Map a value from -1 to 1 to a color from violet to red.
+    -1 -> violet (RGB: 148, 0, 211)
+     0 -> blue (RGB: 0, 0, 255)
+     1 -> red (RGB: 255, 0, 0)
+    """
+    violet = np.array([148, 0, 211])
+    blue = np.array([0, 0, 255])
+    red = np.array([255, 0, 0])
 
-    # Calculate the change in height
-    height_delta = (
-        np.roll(height, 1, axis=0)
-        + np.roll(height, -1, axis=0)
-        + np.roll(height, 1, axis=1)
-        + np.roll(height, -1, axis=1)
-        - 4 * height
-    )
-
-    # Update the velocity and apply damping
-    velocity += height_delta
-    velocity *= DAMPING
-
-    # Update the height
-    height += velocity
+    if value < 0:
+        # Interpolate between violet and blue
+        return tuple((violet + (blue - violet) * (value + 1)).astype(int))
+    else:
+        # Interpolate between blue and red
+        return tuple((blue + (red - blue) * value).astype(int))
 
 
-# Initialize the plot
-fig, ax = plt.subplots()
-im = ax.imshow(height, cmap="seismic", vmin=-10, vmax=10)
+def render_grid(grid, pixel_size=10):
+    """Render the grid using Pygame."""
+    pygame.init()
+    size = len(grid)
+    screen = pygame.display.set_mode((size * pixel_size, size * pixel_size))
+    pygame.display.set_caption("Liquid Surface Visualization")
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        for y in range(size):
+            for x in range(size):
+                color = map_value_to_color(grid[y][x])
+                pygame.draw.rect(
+                    screen,
+                    color,
+                    (x * pixel_size, y * pixel_size, pixel_size, pixel_size),
+                )
+
+        pygame.display.flip()
+
+    pygame.quit()
 
 
-def animate(i):
-    update()
-    im.set_array(height)
-    return [im]
+def main():
+    size = 100  # Example size, you can adjust as needed
+    grid = create_grid(size)
+    render_grid(grid)
 
 
-# Create an animation
-ani = animation.FuncAnimation(fig, animate, frames=TIME_STEPS, interval=50, blit=True)
-
-# Drop a few droplets to start the simulation
-drop_droplet(50, 50, 10)
-drop_droplet(30, 30, 5)
-drop_droplet(70, 70, 5)
-
-# Show the animation
-plt.show()
+if __name__ == "__main__":
+    main()
